@@ -66,7 +66,7 @@ const tourValidationSchema = Joi.object({
 });
 
 const validateTour = (req, res, next) => {
-  console.log("Executing tour validations");
+  // console.log("Executing tour validations");
   const { error } = tourValidationSchema.validate(req.body, {
     abortEarly: false,
   });

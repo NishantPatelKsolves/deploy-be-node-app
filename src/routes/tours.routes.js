@@ -26,7 +26,7 @@ tourRouter.param("id", async (req, res, next, id) => {
   //   }
   //   req.tour = tour;
 
-  console.log("Id from param middleware", id);
+  // console.log("Id from param middleware", id);
   next();
 });
 // Alias routing

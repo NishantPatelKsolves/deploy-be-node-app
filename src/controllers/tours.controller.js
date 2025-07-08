@@ -8,7 +8,7 @@ const getAllTours = asyncHandler(async (req, res, next) => {
 
   // API features: Filtering
 
-  console.log("req.query", req?.query);
+  // console.log("req.query", req?.query);
   // const modifiedQuery = {
   //   ...req.query,
   //   sort: "-ratingsAverage price",

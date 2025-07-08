@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const responseTime = require("response-time");
 const qs = require("qs");
+const compression = require("compression");
 const globalErrorHandler = require("./controllers/error.controller.js");
 const { API, VERSION } = require("./constants.js");
 const router = require("./routes/index.js");
@@ -23,6 +24,7 @@ app.use(
   //     suffix: false,
   //   }
 ); //a middleware that adds a X-Response-Time header to responses. https://expressjs.com/en/resources/middleware/response-time.html
+app.use(compression()); // Returns the compression middleware using the given options. The middleware will attempt to compress response bodies for all requests that traverse through the middleware, based on the given options.
 
 // Override Express's default query parser
 app.set("query parser", (queryString) => {

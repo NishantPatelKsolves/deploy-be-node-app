@@ -4,7 +4,7 @@ const asyncHandler = (fn) => {
     try {
       return await fn(req, res, next);
     } catch (error) {
-      console.log("Error caught in async handler:", error);
+      // console.log("Error caught in async handler:", error);
       next(error);
     }
   };
