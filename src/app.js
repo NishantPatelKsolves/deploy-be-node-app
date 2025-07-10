@@ -44,6 +44,15 @@ const apiAndVersion = `${API}${VERSION}`;
 
 app.use(apiAndVersion, router);
 
+// Creating this route to test the PM2 integration, and automatic server restart when uncaughtException occurs.
+app.get("/create-uncaughtException-route", (req, res) => {
+  setTimeout(() => {
+    console.log(x); // x is undefined → ReferenceError -> uncaughtException
+  }, 100);
+  // console.log(x);
+  res.send("create-uncaughtException-route hit...");
+});
+
 // Handling unhandled routes
 app.all("*name", (req, res, next) => {
   // https://expressjs.com/en/guide/migrating-5.html#path-syntax
