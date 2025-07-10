@@ -1,9 +1,30 @@
+const { redisClient } = require("../database/redisClient");
 const TourModel = require("../models/tour.model");
 const APIFeatures = require("../utils/apiFeatures");
 const AppError = require("../utils/appError");
 const asyncHandler = require("../utils/asyncHandler");
 
 const getAllTours = asyncHandler(async (req, res, next) => {
+  console.log("Base URL:", req.path);
+  console.log("Base URL:", req.baseUrl);
+  const cacheKeys = generateCacheKeys(req); // generate keys
+  console.log("cacheKeys", cacheKeys);
+  // check if data exists in redis or not
+
+  const cachedTours = await redisClient.get(cacheKeys); // get data from redis
+  if (cachedTours) {
+    console.log("Cache hit");
+    const parsedTours = JSON.parse(cachedTours);
+    return res.status(200).json({
+      status: "success",
+      results: parsedTours?.length,
+      data: {
+        tours: parsedTours,
+      },
+    });
+  }
+  console.log("Cache miss");
+
   // Note: when using the 'asyncHandler' function, we must always pass the next() function so that the error can be further passed on to the error handler.
 
   // API features: Filtering
@@ -102,6 +123,17 @@ const getAllTours = asyncHandler(async (req, res, next) => {
   //     message: "Error fetching all tour",
   //   });
   // } // we need to rethink this case: finding 0/no/null tours does not mean an error in a get request because this is perfectly valid that there can be no tour at some point in database, so it can't be considered as an error.
+
+  /**
+   * Caching data in redis
+   * key will be the current url and value will be the json response of that request, so that next time is the same request is made, we can directly get the response from redis instead of making a new request to the primary database.
+   * created separate function to crate keys
+   */
+
+  if (tours?.length) {
+    await redisClient.set(cacheKeys, JSON.stringify(tours)); // save/cache data to redis
+  }
+
   res.status(200).json({
     status: "success",
     results: tours?.length,
@@ -110,6 +142,36 @@ const getAllTours = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+/**
+ * Cache Invalidation
+ * Remove the cache data from redis when a tour is updated or deleted
+ * there are several cache invalidation strategies:
+ * Time based invalidation: keys expire after certain expiration time, eg: storing user session, weather data, ttl: time to live
+ * Direct/Immediate Invalidation: programmatically invalidate the cache data, eg: when a tour is updated or deleted, minimum chance of stale data, provides more control, but creates more load on redis server.
+ *
+ * Eviction Policies: help us decide the data which will stay in redis and which will be deleted.
+ */
+
+function generateCacheKeys(req) {
+  // key format:
+  // 1. GET /api/v1/tours --> api:v1:tours
+  // 2. GET /api/v1/tours:123 --> api:v1:tours:123
+  // 3. GET /api/v1/tours?duration=5&difficulty=easy&sort=-ratingsAverage --> api:v1:tours:duration=5&difficulty=easy&sort=-ratingsAverage
+
+  // step 1: user regex to convert all '/' to ':'
+  // const baseUrl = req?.path.replace(/^\/+|\/+$/, "").replace(/\//g, ":");
+  const baseUrl = req?.baseUrl.replace(/^\/+|\/+$/, "").replace(/\//g, ":");
+  // step 2: sort query parameters, so that if 2 requests have same query parameter in different order then same key should be generated,
+  // map over query params to create desired format and join with '&' symbol.
+  const params = req?.query;
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map((key) => `${key}=${params[key]}`)
+    .join("&");
+  // step  3: if sortedParams is not empty, then append it to baseUrl else return baseUrl
+  return sortedParams ? `${baseUrl}:${sortedParams}` : baseUrl;
+}
 
 const getTourById = asyncHandler(async (req, res, next) => {
   const id = req.params?.id;
@@ -149,6 +211,13 @@ const updateTourById = asyncHandler(async (req, res, next) => {
     // });
     return next(new AppError(`No tour found with id: ${id}`, 404));
   }
+  // Programmatically invalidating the cache when tours update.
+  // step 1: we know tours related keys have format: :api:v1:tours:...
+  const keys = await redisClient.keys("api:v1:tours*");
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+
   res.status(200).json({
     status: "success",
     data: {
@@ -167,6 +236,14 @@ const deleteTourById = asyncHandler(async (req, res, next) => {
     // });
     throw new AppError(`No tour found with id: ${id}`, 500);
   }
+
+  // Programmatically invalidating the cache when tours update.
+  // step 1: we know tours related keys have format: :api:v1:tours:...
+  const keys = await redisClient.keys("api:v1:tours*");
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+
   res.status(204).json({
     status: "success",
     // data: {

@@ -1,6 +1,7 @@
 const app = require("./app");
 const dotenv = require("dotenv");
 const run = require("./database");
+const { connectRedis } = require("./database/redisClient");
 /**
  * Nodejs uncaught exception handling
  * https://stackoverflow.com/questions/50202507/nodejs-uncaught-exception-handling
@@ -21,15 +22,34 @@ dotenv.config();
 const port = process.env.PORT || 3000;
 let server;
 
-run()
-  .then(() => {
+// M1: one way of connecting to database and redis and then only listen to server
+// run()
+//   .then(() => {
+//     // redisClient();
+//     server = app.listen(port, () => {
+//       console.log(`Listening on http://localhost:${port}`);
+//     });
+//   })
+//   .catch((error) => {
+//     console.error("Unable to connect to the MongoDB Atlas cluster", error);
+//   });
+
+// M2: other way of connecting to database and redis and then only listen to server
+async function bootstrap() {
+  try {
+    await run(); // connect to MongoDB
+    await connectRedis(); // connect to Redis
+
     server = app.listen(port, () => {
-      console.log(`Listening on http://localhost:${port}`);
+      console.log(`Server listening at http://localhost:${port}`);
     });
-  })
-  .catch((error) => {
-    console.error("Unable to connect to the MongoDB Atlas cluster", error);
-  });
+  } catch (error) {
+    console.error("Failed to start server due to connection error:", error);
+    process.exit(1);
+  }
+}
+
+bootstrap();
 
 /**
  * What is an unhandled promise rejection?

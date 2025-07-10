@@ -44,7 +44,7 @@ const apiAndVersion = `${API}${VERSION}`;
 
 app.use(apiAndVersion, router);
 
-// Creating this route to test the PM2 integration, and automatic server restart when uncaughtException occurs.
+// Creating this route to test the PM2 integration, and automatic server restart when uncaughtException occurs: REMOVE IT FOR PRODUCTION APPLICATIONS
 app.get("/create-uncaughtException-route", (req, res) => {
   setTimeout(() => {
     console.log(x); // x is undefined → ReferenceError -> uncaughtException
