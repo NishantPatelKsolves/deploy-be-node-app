@@ -22,7 +22,7 @@ app.use(
   //     digits: 2,
   //     header: "Custom-Header-X-Response-Time",
   //     suffix: false,
-  //   }
+  //   } // options object which is completely optional.
 ); //a middleware that adds a X-Response-Time header to responses. https://expressjs.com/en/resources/middleware/response-time.html
 app.use(compression()); // Returns the compression middleware using the given options. The middleware will attempt to compress response bodies for all requests that traverse through the middleware, based on the given options.
 
@@ -41,7 +41,6 @@ app.set("query parser", (queryString) => {
 // });
 
 const apiAndVersion = `${API}${VERSION}`;
-
 app.use(apiAndVersion, router);
 
 // Creating this route to test the PM2 integration, and automatic server restart when uncaughtException occurs: REMOVE IT FOR PRODUCTION APPLICATIONS
