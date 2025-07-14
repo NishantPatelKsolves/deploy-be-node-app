@@ -4,7 +4,7 @@ const {
   getUserById,
   updateUserById,
 } = require("../controllers/users.controller");
-const { paramValidation } = require("../middlewares");
+const { paramValidation, updateUserValidation } = require("../middlewares");
 const userRouter = express.Router();
 
 userRouter.get(`/`, getAllUsers);
