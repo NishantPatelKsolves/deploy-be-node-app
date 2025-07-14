@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please provide a password"],
       minlength: 8,
+      select: false,
     },
     confirm_password: {
       type: String,
@@ -32,11 +33,16 @@ const userSchema = new mongoose.Schema(
         },
         message: "Passwords are not the same.",
       },
+      select: false,
     },
     photo: {
       type: String,
     },
-    isDeleted: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false, select: false },
+    passwordChangedAt: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true }
 );
@@ -51,6 +57,27 @@ userSchema.pre("save", async function (next) {
   this.confirm_password = undefined;
   next();
 });
+
+// instance methods for mongoose model instances
+userSchema.methods.comparePassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// instance methods for mongoose model instances
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    // if the user is created for first time the passwordChangedAt will be null, that why default return is 'false'.
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
 
 const UserModel = mongoose.model("User", userSchema);
 

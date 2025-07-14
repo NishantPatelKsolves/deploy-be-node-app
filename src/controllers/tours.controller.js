@@ -5,15 +5,15 @@ const AppError = require("../utils/appError");
 const asyncHandler = require("../utils/asyncHandler");
 
 const getAllTours = asyncHandler(async (req, res, next) => {
-  console.log("Base URL:", req.path);
-  console.log("Base URL:", req.baseUrl);
+  // console.log("req.user:", req.user); // comes from protectRoute middleware
+
   const cacheKeys = generateCacheKeys(req); // generate keys
-  console.log("cacheKeys", cacheKeys);
+  // console.log("cacheKeys", cacheKeys);
   // check if data exists in redis or not
 
   const cachedTours = await redisClient.get(cacheKeys); // get data from redis
   if (cachedTours) {
-    console.log("Cache hit");
+    // console.log("Cache hit");
     const parsedTours = JSON.parse(cachedTours);
     return res.status(200).json({
       status: "success",
@@ -23,7 +23,7 @@ const getAllTours = asyncHandler(async (req, res, next) => {
       },
     });
   }
-  console.log("Cache miss");
+  // console.log("Cache miss");
 
   // Note: when using the 'asyncHandler' function, we must always pass the next() function so that the error can be further passed on to the error handler.
 
@@ -190,6 +190,7 @@ const getTourById = asyncHandler(async (req, res, next) => {
     // M2 (b):
     return next(new AppError(`No tour found with id: ${id}`, 404));
   }
+
   res.status(200).json({
     status: "success",
     data: {

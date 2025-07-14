@@ -1,10 +1,10 @@
-const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
 const AppError = require("../utils/appError");
 const asyncHandler = require("../utils/asyncHandler");
+const { generateJWTToken } = require("../utils/jwt");
 
 const signUp = asyncHandler(async (req, res, next) => {
-//   console.log("req.body", req.body);
+  //   console.log("req.body", req.body);
   const userData = req.body;
   const userExist = await UserModel.findOne({ email: userData?.email });
 
@@ -38,16 +38,30 @@ const signUp = asyncHandler(async (req, res, next) => {
   });
 });
 
-const generateJWTToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_SECRET, {
-    expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
-  });
-};
-
 const login = asyncHandler(async (req, res, next) => {
+  const userData = req.body;
+  //   console.log("userData", userData);
+  const user = await UserModel.findOne({ email: userData?.email }).select(
+    "+password"
+  );
+
+  if (
+    !user ||
+    !(await user.comparePassword(userData?.password, user.password))
+  ) {
+    throw new AppError("Invalid credentials", 401);
+  }
+
+  const token = generateJWTToken({
+    id: user?._id,
+    email: user?.email,
+  });
+
   res.status(200).json({
     status: "success",
     message: "Login successful",
+    // data: user, // does not matter when login, if still sending this user to client, hde password field.
+    token,
   });
 });
 
