@@ -3,6 +3,7 @@ const morgan = require("morgan");
 const responseTime = require("response-time");
 const qs = require("qs");
 const compression = require("compression");
+const { rateLimit } = require("express-rate-limit");
 const globalErrorHandler = require("./controllers/error.controller.js");
 const { API, VERSION } = require("./constants.js");
 const router = require("./routes/index.js");
@@ -25,6 +26,14 @@ app.use(
   //   } // options object which is completely optional.
 ); //a middleware that adds a X-Response-Time header to responses. https://expressjs.com/en/resources/middleware/response-time.html
 app.use(compression()); // Returns the compression middleware using the given options. The middleware will attempt to compress response bodies for all requests that traverse through the middleware, based on the given options.
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+  message: "Too many requests from this IP, please try again after 15 mins!", // Response to return after limit is reached.
+  standardHeaders: "draft-8", // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+});
+app.use(limiter); // Basic rate-limiting middleware for Express. Use to limit repeated requests to public APIs and/or endpoints such as password reset. Prevents DOS and brute-force attacks.
 
 // Override Express's default query parser
 app.set("query parser", (queryString) => {
@@ -79,5 +88,3 @@ app.all("*name", (req, res, next) => {
 app.use(globalErrorHandler);
 
 module.exports = app;
-
-
