@@ -33,6 +33,14 @@ const userSignupSchema = Joi.object({
   photo: Joi.string().optional().messages({
     "string.base": "Photo must be a string",
   }),
+
+  role: Joi.string()
+    .valid("user", "guide", "lead-guide", "admin")
+    .optional()
+    .messages({
+      "any.only": "Role must be one of: user, guide, lead-guide, admin",
+      "string.base": "Role must be a string",
+    }),
 });
 
 const validateUserSignup = (req, res, next) => {

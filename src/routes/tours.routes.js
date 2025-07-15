@@ -13,6 +13,7 @@ const {
   tourValidation,
   updateTourValidation,
   aliasTopTours,
+  restrictAccess,
 } = require("../middlewares/index");
 
 const tourRouter = express.Router();
@@ -41,7 +42,13 @@ tourRouter.get(
 tourRouter.get("/stats", getTourStats);
 tourRouter.get(`/:id`, paramValidation, getTourById);
 tourRouter.patch(`/:id`, paramValidation, updateTourValidation, updateTourById);
-tourRouter.delete(`/:id`, paramValidation, deleteTourById);
+tourRouter.delete(
+  `/:id`,
+  paramValidation,
+  restrictAccess("admin", "lead-guide"),
+  deleteTourById
+);
+// restrictAccess('admin', 'lead-guide'),
 tourRouter.post("/", tourValidation, addTour);
 
 module.exports = tourRouter;

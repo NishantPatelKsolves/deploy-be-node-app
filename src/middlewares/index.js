@@ -7,4 +7,5 @@ module.exports = {
   validateUserLogin: require("./validateUserLogin.middleware"),
   protectRoute: require("./protectRoute.middleware"),
   updateUserValidation: require("./updateUserValidation.middleware"),
+  restrictAccess: require("./restrictAccess.middleware"),
 };

@@ -228,7 +228,9 @@ const updateTourById = asyncHandler(async (req, res, next) => {
 });
 
 const deleteTourById = asyncHandler(async (req, res, next) => {
+  // console.log("Reached deleteTourById");
   const id = req.params?.id;
+  // console.log("Delete tour id:", id);
   const tour = await TourModel.findByIdAndDelete(id);
   if (!tour) {
     // return res.status(404).json({
@@ -237,6 +239,7 @@ const deleteTourById = asyncHandler(async (req, res, next) => {
     // });
     throw new AppError(`No tour found with id: ${id}`, 500);
   }
+  // console.log("Deleted tour:", tour);
 
   // Programmatically invalidating the cache when tours update.
   // step 1: we know tours related keys have format: :api:v1:tours:...
@@ -245,11 +248,22 @@ const deleteTourById = asyncHandler(async (req, res, next) => {
     await redisClient.del(keys);
   }
 
-  res.status(204).json({
+  // console.log("Tor deleted successfully");
+
+  // res.status(204).json({
+  //   status: "success",
+  //   message: "Tour deleted successfully",
+  //   data: {
+  //     tour,
+  //   }, // 204 status code or delete operation doesn't return any data, so even if you sent data in json, it will be ignored.
+  // });
+
+  res.status(200).json({
     status: "success",
-    // data: {
-    //   tour,
-    // }, // generally 204 status code or delete operation doesn't return any data
+    message: "Tour deleted successfully",
+    data: {
+      tour,
+    }, // using 200 code temporarily to send some data to the client.
   });
 });
 
