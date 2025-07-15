@@ -33,11 +33,28 @@ const signUp = asyncHandler(async (req, res, next) => {
     email: addedUser.email,
   });
 
-  res.status(201).json({
+  // res.status(201).json({
+  //   status: "success",
+  //   message: "Signup successful",
+  //   data: addedUser,
+  //   token,
+  // });
+  // Cookie: is a piece of data that a server sends to the client, it is automatically stored on the client's computer and is sent back to the same server with each request.
+  // we know that 'jwt' should be stored in a secure httpOnly cookie, let's send the token as a cookie.
+  // since we send the token only in auth controller we set the cookie in auth controller.
+  // to send a cookie, just attach it to the res object.
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 // days in milliseconds
+    ),
+    secure: process.env.NODE_ENV === "production", // only send cookie over https
+    httpOnly: true, // do not allow client to access/modify the cookie
+  };
+  res.cookie("jwt", token, options).status(201).json({
     status: "success",
     message: "Signup successful",
     data: addedUser,
-    token,
+    token, // just for development
   });
 });
 
@@ -63,7 +80,7 @@ const login = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Login successful",
-    // data: user, // does not matter when login, if still sending this user to client, hde password field.
+    // data: user, // does not matter when login, if still sending this user to client, hide password field.
     token,
   });
 });
