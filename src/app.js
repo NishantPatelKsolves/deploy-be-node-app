@@ -4,13 +4,16 @@ const responseTime = require("response-time");
 const qs = require("qs");
 const compression = require("compression");
 const { rateLimit } = require("express-rate-limit");
+const helmet = require("helmet");
 const globalErrorHandler = require("./controllers/error.controller.js");
 const { API, VERSION } = require("./constants.js");
 const router = require("./routes/index.js");
 const AppError = require("./utils/appError.js");
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
 // express.json() reads the Content-Type: application/json header in the incoming request and parses the JSON data into a JavaScript object, which is then accessible via req.body.
+// limit option implements limiting the amount of data that can be sent to the server, hence prevent attacker to sent huge data.
+// bodies larger than 10kb will not be accepted.
 app.use(express.urlencoded({ extended: true }));
 // This middleware parses URL-encoded bodies and makes the data available as a JavaScript object in req.body.
 // If you don’t use express.json() and/or urlencoded(), req.body will be undefined for JSON/Form data requests.
@@ -34,6 +37,7 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
 });
 app.use(limiter); // Basic rate-limiting middleware for Express. Use to limit repeated requests to public APIs and/or endpoints such as password reset. Prevents DOS and brute-force attacks.
+app.use(helmet()); // Helmet is an npm package that helps secure Express/Connect apps with various HTTP headers. Helmet is a wrapper around 15 middleware functions that set security-related HTTP headers, such as Content-Security-Policy, X-Frame-Options, X-XSS-Protection, and more. https://dev.to/sid__/why-do-you-need-helmet-in-nodejs-h1b
 
 // Override Express's default query parser
 app.set("query parser", (queryString) => {
